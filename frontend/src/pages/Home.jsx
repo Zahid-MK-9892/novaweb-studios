@@ -1,34 +1,43 @@
-import { submitContact } from "../api";
+import { useState } from "react";
+import { sendContact } from "../api";
 
 export default function Home() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const form = e.target;
-
-    await submitContact({
-      name: form.name.value,
-      email: form.email.value,
-      message: form.message.value,
-    });
-
-    alert("Message sent successfully!");
-    form.reset();
+    await sendContact({ name, email, message });
+    alert("Message sent successfully");
+    setName("");
+    setEmail("");
+    setMessage("");
   };
 
   return (
-    <div style={{ padding: 20 }}>
+    <div>
       <h1>NovaWeb Studios</h1>
-      <p>Professional Sites. Real Results.</p>
 
-      {/* Navigation */}
-      <a href="/portfolio">View Portfolio</a>
-      <hr />
-
-      <h3>Contact Us</h3>
       <form onSubmit={handleSubmit}>
-        <input name="name" placeholder="Name" required /><br /><br />
-        <input name="email" placeholder="Email" required /><br /><br />
-        <textarea name="message" placeholder="Message" required /><br /><br />
+        <input
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+
+        <input
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <textarea
+          placeholder="Message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+        />
+
         <button type="submit">Send</button>
       </form>
     </div>

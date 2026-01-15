@@ -1,63 +1,43 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ REQUIRED
-import { setToken } from "../utils/auth";
+import { adminLogin } from "../api";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  const navigate = useNavigate(); // ✅ REQUIRED
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError("");
 
-    try {
-      const res = await fetch("http://localhost:5000/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+    const data = await adminLogin({ email, password });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || "Login failed");
-        return;
-      }
-
-      setToken(data.token);
-      navigate("/admin"); // ✅ NOW WORKS
-    } catch (err) {
-      setError("Server error");
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+      navigate("/admin");
+    } else {
+      alert("Invalid credentials");
     }
   };
 
   return (
-    <div style={{ padding: 40 }}>
-      <h2>Admin Login</h2>
+    <form onSubmit={handleLogin}>
+      <h1>Admin Login</h1>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      <input
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
 
-      <form onSubmit={handleLogin}>
-        <input
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        /><br /><br />
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
 
-        <input
-          placeholder="Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        /><br /><br />
-
-        <button type="submit">Login</button>
-      </form>
-    </div>
+      <button type="submit">Login</button>
+    </form>
   );
 }
