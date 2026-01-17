@@ -1,62 +1,37 @@
 const Contact = require("../models/Contact");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-/**
- * Gmail SMTP transporter (Render-safe)
- * IMPORTANT:
- * - Uses smtp.gmail.com
- * - Uses port 465
- * - Uses secure SSL
- */
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // MUST be true for port 465
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 exports.send = async (req, res) => {
   try {
     const { name, email, message } = req.body;
 
-    // ✅ Basic validation
     if (!name || !email || !message) {
-      return res.status(400).json({
-        ok: false,
-        error: "All fields are required"
-      });
+      return res.status(400).json({ ok: false, error: "All fields required" });
     }
 
-    // 1️⃣ Save contact to MongoDB
+    // Save to DB
     await Contact.create({ name, email, message });
 
-    // 2️⃣ Send notification email
-    await transporter.sendMail({
-      from: `"NovaWeb Studios" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER,
+    // Send email via Resend
+    await resend.emails.send({
+      from: "NovaWeb Studios <onboarding@resend.dev>",
+      to: ["yourgmail@gmail.com"],   // <-- YOUR EMAIL HERE
       subject: "🚀 New Lead - NovaWeb Studios",
-      text: `
-New Contact Form Submission
-
-Name: ${name}
-Email: ${email}
-
-Message:
-${message}
+      html: `
+        <h2>New Contact Form Submission</h2>
+        <p><b>Name:</b> ${name}</p>
+        <p><b>Email:</b> ${email}</p>
+        <p><b>Message:</b></p>
+        <p>${message}</p>
       `
     });
 
-    // 3️⃣ Success response
     res.json({ ok: true });
 
   } catch (error) {
     console.error("Contact email error:", error);
-    res.status(500).json({
-      ok: false,
-      error: "Email sending failed"
-    });
+    res.status(500).json({ ok: false, error: "Email failed" });
   }
 };
