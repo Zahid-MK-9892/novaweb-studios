@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getPortfolio } from "../api";
+import { API_BASE_URL } from "../utils/config";
 
 export default function Portfolio() {
   const [items, setItems] = useState([]);

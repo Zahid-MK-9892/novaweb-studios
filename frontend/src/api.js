@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./config";
+import { API_BASE_URL } from "./utils/config";
 
 /* ======================
    CONTACT FORM
@@ -11,6 +11,7 @@ export const sendContact = async (data) => {
     },
     body: JSON.stringify(data),
   });
+
   return res.json();
 };
 
@@ -33,6 +34,7 @@ export const adminLogin = async (credentials) => {
     },
     body: JSON.stringify(credentials),
   });
+
   return res.json();
 };
 
@@ -48,29 +50,6 @@ export const addPortfolio = async (data, token) => {
     },
     body: JSON.stringify(data),
   });
-  return res.json();
-};
 
-/* ======================
-   CRM LEADS
-====================== */
-export const getLeads = async (token) => {
-  const res = await fetch(`${API_BASE_URL}/api/admin/leads`, {
-    headers: {
-      Authorization: token,
-    },
-  });
-  return res.json();
-};
-
-export const updateLeadStatus = async (id, status, token) => {
-  const res = await fetch(`${API_BASE_URL}/api/admin/leads/${id}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: token,
-    },
-    body: JSON.stringify({ status }),
-  });
   return res.json();
 };

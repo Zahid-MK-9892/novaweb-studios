@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { sendContact } from "../api";
+import { API_BASE_URL } from "../utils/config";
 
 export default function Home() {
   const [name, setName] = useState("");
