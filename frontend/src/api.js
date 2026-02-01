@@ -1,6 +1,8 @@
 import { API_BASE_URL } from "./config";
 
-/* CONTACT FORM */
+/* ======================
+   CONTACT FORM
+====================== */
 export const sendContact = async (data) => {
   const res = await fetch(`${API_BASE_URL}/api/contact`, {
     method: "POST",
@@ -12,13 +14,17 @@ export const sendContact = async (data) => {
   return res.json();
 };
 
-/* GET PORTFOLIO */
+/* ======================
+   GET PORTFOLIO
+====================== */
 export const getPortfolio = async () => {
   const res = await fetch(`${API_BASE_URL}/api/portfolio`);
   return res.json();
 };
 
-/* ADMIN LOGIN */
+/* ======================
+   ADMIN LOGIN
+====================== */
 export const adminLogin = async (credentials) => {
   const res = await fetch(`${API_BASE_URL}/api/admin/login`, {
     method: "POST",
@@ -30,7 +36,9 @@ export const adminLogin = async (credentials) => {
   return res.json();
 };
 
-/* ADD PORTFOLIO (ADMIN) */
+/* ======================
+   ADD PORTFOLIO (ADMIN)
+====================== */
 export const addPortfolio = async (data, token) => {
   const res = await fetch(`${API_BASE_URL}/api/portfolio`, {
     method: "POST",
@@ -39,6 +47,30 @@ export const addPortfolio = async (data, token) => {
       Authorization: token,
     },
     body: JSON.stringify(data),
+  });
+  return res.json();
+};
+
+/* ======================
+   CRM LEADS
+====================== */
+export const getLeads = async (token) => {
+  const res = await fetch(`${API_BASE_URL}/api/admin/leads`, {
+    headers: {
+      Authorization: token,
+    },
+  });
+  return res.json();
+};
+
+export const updateLeadStatus = async (id, status, token) => {
+  const res = await fetch(`${API_BASE_URL}/api/admin/leads/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token,
+    },
+    body: JSON.stringify({ status }),
   });
   return res.json();
 };

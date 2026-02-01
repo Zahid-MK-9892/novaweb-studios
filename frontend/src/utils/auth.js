@@ -9,3 +9,7 @@ export const getToken = () => {
 export const logout = () => {
   localStorage.removeItem("token");
 };
+
+export const isAdmin = () => {
+  return !!localStorage.getItem("token");
+};
