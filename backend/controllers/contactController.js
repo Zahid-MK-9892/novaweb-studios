@@ -1,23 +1,65 @@
 const Contact = require("../models/Contact");
 const { Resend } = require("resend");
+const twilio = require("twilio");
 
+/* ===============================
+   Initialize Services
+================================ */
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
+
+/* ===============================
+   Controller
+================================ */
 exports.send = async (req, res) => {
+  const { name, email, message } = req.body;
+
+  // 🔒 Validation
+  if (!name || !email || !message) {
+    return res.status(400).json({
+      ok: false,
+      error: "All fields required"
+    });
+  }
+
   try {
-    const { name, email, message } = req.body;
-
-    // 1️⃣ Basic validation
-    if (!name || !email || !message) {
-      return res.status(400).json({ ok: false, error: "All fields required" });
-    }
-
-    // 2️⃣ Save to database
+    /* ===============================
+       1️⃣ Save lead (CRITICAL)
+    =============================== */
     await Contact.create({ name, email, message });
 
-    // 3️⃣ SEND ADMIN EMAIL (LOG ERRORS)
-    try {
-      await resend.emails.send({
+    // ✅ Respond immediately (DO NOT BLOCK USER)
+    res.json({ ok: true });
+
+    /* ===============================
+       2️⃣ WhatsApp Admin Notification
+       (NON-BLOCKING)
+    =============================== */
+    twilioClient.messages
+      .create({
+        from: process.env.TWILIO_WHATSAPP_FROM,
+        to: process.env.TWILIO_WHATSAPP_TO,
+        body: `🚀 New Lead - NovaWeb Studios
+
+👤 Name: ${name}
+📧 Email: ${email}
+
+💬 Message:
+${message}`
+      })
+      .then(() => console.log("✅ WhatsApp sent"))
+      .catch(err => console.error("❌ WhatsApp failed:", err.message));
+
+    /* ===============================
+       3️⃣ Admin Email Notification
+       (NON-BLOCKING)
+    =============================== */
+    resend.emails
+      .send({
         from: "NovaWeb Studios <onboarding@resend.dev>",
         to: process.env.ADMIN_EMAIL,
         subject: "🚀 New Lead - NovaWeb Studios",
@@ -28,38 +70,35 @@ exports.send = async (req, res) => {
           <p><b>Message:</b></p>
           <p>${message}</p>
         `
-      });
+      })
+      .then(() => console.log("✅ Admin email sent"))
+      .catch(err => console.error("❌ Admin email failed:", err));
 
-      console.log("✅ Admin email sent successfully");
-    } catch (emailError) {
-      console.error("❌ Admin email failed:", emailError);
-    }
-
-    // 4️⃣ SEND AUTO-REPLY TO CUSTOMER (LOG ERRORS)
-    try {
-      await resend.emails.send({
+    /* ===============================
+       4️⃣ Customer Auto-Reply Email
+       (NON-BLOCKING)
+    =============================== */
+    resend.emails
+      .send({
         from: "NovaWeb Studios <onboarding@resend.dev>",
         to: email,
         subject: "Thanks for contacting NovaWeb Studios 👋",
         html: `
           <p>Hi ${name},</p>
-          <p>Thanks for reaching out. We’ve received your message and will reply shortly.</p>
+          <p>Thanks for reaching out to <b>NovaWeb Studios</b>.</p>
+          <p>We’ve received your message and will get back to you shortly.</p>
+
           <p><b>Your message:</b></p>
           <blockquote>${message}</blockquote>
+
           <p>— NovaWeb Studios</p>
         `
-      });
-
-      console.log("✅ Auto-reply email sent to customer");
-    } catch (autoReplyError) {
-      console.error("❌ Auto-reply email failed:", autoReplyError);
-    }
-
-    // 5️⃣ Final response to frontend
-    res.json({ ok: true });
+      })
+      .then(() => console.log("✅ Auto-reply sent"))
+      .catch(err => console.error("❌ Auto-reply failed:", err));
 
   } catch (error) {
-    console.error("❌ Contact controller error:", error);
+    console.error("❌ Contact controller fatal error:", error);
     res.status(500).json({ ok: false, error: "Server error" });
   }
 };
