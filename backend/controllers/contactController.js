@@ -35,7 +35,7 @@ exports.send = async (req, res) => {
     // 3️⃣ Auto-reply email to CUSTOMER
     await resend.emails.send({
       from: "NovaWeb Studios <onboarding@resend.dev>",
-      to: [email],
+      to: [zahidkhan9769837950@gmail.com],
       subject: "Thanks for contacting NovaWeb Studios!",
       html: `
         <p>Hi ${name},</p>
