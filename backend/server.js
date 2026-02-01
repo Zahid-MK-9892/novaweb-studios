@@ -15,6 +15,7 @@ mongoose
 app.use("/api/contact", require("./routes/contactRoutes"));
 app.use("/api/portfolio", require("./routes/portfolioRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/admin", require("./routes/adminCrmRoutes"));
 
 // ✅ REQUIRED FOR RENDER
 const PORT = process.env.PORT || 5000;
