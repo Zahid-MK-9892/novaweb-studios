@@ -1,93 +1,65 @@
 const Contact = require("../models/Contact");
-
-// 🔹 WhatsApp (Twilio)
-const twilio = require("twilio");
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-
-// 🔹 Email (Resend)
 const { Resend } = require("resend");
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 exports.send = async (req, res) => {
-  const { name, email, message } = req.body;
-
-  if (!name || !email || !message) {
-    return res.status(400).json({ ok: false, error: "All fields required" });
-  }
-
   try {
-    /* ===============================
-       1️⃣ Save lead to database
-    =============================== */
+    const { name, email, message } = req.body;
+
+    // 1️⃣ Basic validation
+    if (!name || !email || !message) {
+      return res.status(400).json({ ok: false, error: "All fields required" });
+    }
+
+    // 2️⃣ Save to database
     await Contact.create({ name, email, message });
 
-    /* ===============================
-       2️⃣ WhatsApp Admin Notification
-    =============================== */
-    twilioClient.messages.create({
-      from: process.env.TWILIO_WHATSAPP_FROM,
-      to: process.env.TWILIO_WHATSAPP_TO,
-      body: `🚀 New Lead - NovaWeb Studios
+    // 3️⃣ SEND ADMIN EMAIL (LOG ERRORS)
+    try {
+      await resend.emails.send({
+        from: "NovaWeb Studios <onboarding@resend.dev>",
+        to: process.env.ADMIN_EMAIL,
+        subject: "🚀 New Lead - NovaWeb Studios",
+        html: `
+          <h2>New Contact Form Submission</h2>
+          <p><b>Name:</b> ${name}</p>
+          <p><b>Email:</b> ${email}</p>
+          <p><b>Message:</b></p>
+          <p>${message}</p>
+        `
+      });
 
-👤 Name: ${name}
-📧 Email: ${email}
+      console.log("✅ Admin email sent successfully");
+    } catch (emailError) {
+      console.error("❌ Admin email failed:", emailError);
+    }
 
-💬 Message:
-${message}`
-    }).catch(err => {
-      console.error("WhatsApp failed:", err.message);
-    });
+    // 4️⃣ SEND AUTO-REPLY TO CUSTOMER (LOG ERRORS)
+    try {
+      await resend.emails.send({
+        from: "NovaWeb Studios <onboarding@resend.dev>",
+        to: email,
+        subject: "Thanks for contacting NovaWeb Studios 👋",
+        html: `
+          <p>Hi ${name},</p>
+          <p>Thanks for reaching out. We’ve received your message and will reply shortly.</p>
+          <p><b>Your message:</b></p>
+          <blockquote>${message}</blockquote>
+          <p>— NovaWeb Studios</p>
+        `
+      });
 
-    /* ===============================
-       3️⃣ Admin Email Notification
-    =============================== */
-    resend.emails.send({
-      from: process.env.EMAIL_FROM,
-      to: process.env.ADMIN_EMAIL,
-      subject: "🚀 New Lead - NovaWeb Studios",
-      html: `
-        <h2>New Contact Form Submission</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message}</p>
-      `
-    }).catch(err => {
-      console.error("Admin email failed:", err.message);
-    });
+      console.log("✅ Auto-reply email sent to customer");
+    } catch (autoReplyError) {
+      console.error("❌ Auto-reply email failed:", autoReplyError);
+    }
 
-    /* ===============================
-       4️⃣ Customer Auto-Reply Email
-    =============================== */
-    resend.emails.send({
-      from: process.env.EMAIL_FROM,
-      to: email,
-      subject: "Thanks for contacting NovaWeb Studios 👋",
-      html: `
-        <p>Hi ${name},</p>
-        <p>Thank you for reaching out to <strong>NovaWeb Studios</strong>.</p>
-        <p>We’ve received your message and will get back to you shortly.</p>
-
-        <p><strong>Your message:</strong></p>
-        <blockquote>${message}</blockquote>
-
-        <p>Regards,<br/>
-        NovaWeb Studios Team</p>
-      `
-    }).catch(err => {
-      console.error("Auto-reply failed:", err.message);
-    });
-
-    /* ===============================
-       5️⃣ Respond immediately
-    =============================== */
+    // 5️⃣ Final response to frontend
     res.json({ ok: true });
 
   } catch (error) {
-    console.error("Contact controller error:", error);
-    res.status(500).json({ ok: false });
+    console.error("❌ Contact controller error:", error);
+    res.status(500).json({ ok: false, error: "Server error" });
   }
 };
