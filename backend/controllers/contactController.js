@@ -17,7 +17,7 @@ exports.send = async (req, res) => {
     // Send email via Resend
     await resend.emails.send({
       from: "NovaWeb Studios <onboarding@resend.dev>",
-      to: ["yourgmail@gmail.com"],   // <-- YOUR EMAIL HERE
+      to: ["zahid.k.916717@gmail.com"],   // <-- YOUR EMAIL HERE
       subject: "🚀 New Lead - NovaWeb Studios",
       html: `
         <h2>New Contact Form Submission</h2>
