@@ -1,9 +1,8 @@
 import { Navigate } from "react-router-dom";
+import { isAuthenticated } from "./auth";
 
 const RequireAuth = ({ children }) => {
-  const token = localStorage.getItem("adminToken");
-
-  if (!token) {
+  if (!isAuthenticated()) {
     return <Navigate to="/admin/login" replace />;
   }
 
